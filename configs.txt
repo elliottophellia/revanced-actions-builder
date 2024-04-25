@@ -1,0 +1,61 @@
+#
+# REVANCED BUILD APK CONFIG
+#
+# READ THIS FIRST | READ THIS FIRST | READ THIS FIRST | READ THIS FIRST
+#
+# Latest version of GMSCore/MicroG is alredy included so you don't really have to build it again
+# Youtube Music, Twitch, TikTok, and VSCO is not supported by APKPure
+# Twitter (X) is not supported by UpToDown
+# Mix is used to fix those two issues
+# PKGNAME and VERSION variables are might be different for each Mirror
+#
+
+APP_MIRROR="mix"
+
+BUILD_REMICROG="false"
+BUILD_REVANCED="false"
+BUILD_REVANCED_MUSIC="false"
+BUILD_RETWITCH="false"
+BUILD_RELIGHTROOM="false"
+BUILD_RETWITTER="false"
+BUILD_REINSTAGRAM="false"
+BUILD_RETIKTOK="false"
+BUILD_REPIXIV="false"
+BUILD_REVSCO="false"
+BUILD_REREDDIT="false"
+
+APPNAME_REMICROG="microg-for-ogyt"
+APPNAME_REVANCED="youtube"
+APPNAME_REVANCED_MUSIC="youtube-music"
+APPNAME_RETWITCH="twitch"
+APPNAME_RELIGHTROOM="adobe-lightroom-mobile"
+APPNAME_RETWITTER="twitter"
+APPNAME_REINSTAGRAM="instagram"
+APPNAME_RETIKTOK="tiktok"
+APPNAME_REPIXIV="pixiv"
+APPNAME_REVSCO="vsco-cam"
+APPNAME_REREDDIT="reddit-official-app"
+
+PKGNAME_REMICROG="com.mgoogle.android.gms"
+PKGNAME_REVANCED="com.google.android.youtube"
+PKGNAME_REVANCED_MUSIC="com.google.android.apps.youtube.music"
+PKGNAME_RETWITCH="tv.twitch.android.app"
+PKGNAME_RELIGHTROOM="com.adobe.lrmobile"
+PKGNAME_RETWITTER="com.twitter.android"
+PKGNAME_REINSTAGRAM="com.instagram.android"
+PKGNAME_RETIKTOK="com.ss.android.ugc.trill"
+PKGNAME_REPIXIV="jp.pxv.android"
+PKGNAME_REVSCO="com.vsco.cam"
+PKGNAME_REREDDIT="com.reddit.frontpage"
+
+VERSION_REMICROG="0.3.1.4.240913"
+VERSION_REVANCED="19.11.43"
+VERSION_REVANCED_MUSIC="6.45.54"
+VERSION_RETWITCH="16.9.1"
+VERSION_RELIGHTROOM="9.2.0"
+VERSION_RETWITTER="10.35.0-release.0"
+VERSION_REINSTAGRAM="326.0.0.42.90"
+VERSION_RETIKTOK="32.5.3"
+VERSION_REPIXIV="6.104.1"
+VERSION_REVSCO="345"
+VERSION_REREDDIT="2024.15.0"

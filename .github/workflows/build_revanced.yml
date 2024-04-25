@@ -1,0 +1,54 @@
+name: Build APK with Rei Patches
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'configs.txt'
+
+jobs:
+  build:
+    runs-on: 'ubuntu-22.04'
+    steps:
+    - name: 'Checkout GitHub Action'
+      uses: 'actions/checkout@main'
+
+    - name: 'Setup Azul Zulu 17 JDK'
+      uses: 'actions/setup-java@v3.12.0'
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+        java-package: 'jdk'
+
+    - name: 'Setup APKSigner'
+      run: |
+        sudo apt-get install -y apksigner
+
+    - name: 'Setup PUP HTML Parser'
+      run: |
+        sudo apt-get install -y golang
+        go install github.com/ericchiang/pup@latest
+        echo "PATH=${PATH}:$(go env GOPATH)/bin" >> $GITHUB_ENV
+
+    - name: 'Compile APK with patches'
+      env:
+        CN: '${{ secrets.KEYSTORE_CN }}'
+        PASSWORD: '${{ secrets.KEYSTORE_PASSWORD }}'
+        GHTOKEN: '${{ secrets.ACTIONS_DEPLOY_ACCESS_TOKEN }}'
+      run: |
+        chmod +x main.sh
+        ./main.sh "$CN" "$PASSWORD" "$GHTOKEN"
+        echo "date_now=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
+
+    - name: 'Upload to GitHub Releases'
+      uses: "marvinpinto/action-automatic-releases@v1.2.1"
+      with:
+        repo_token: '${{ secrets.ACTIONS_DEPLOY_ACCESS_TOKEN }}'
+        automatic_release_tag: 'r${{ env.date_now }}'
+        prerelease: false
+        draft: false
+        title: 'Rei Patches - r${{ env.date_now }}'
+        files: |
+          output/*.apk
