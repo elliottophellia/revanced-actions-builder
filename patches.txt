@@ -7,8 +7,7 @@ exclusive-audio-playback
 hdr-auto-brightness
 hide-ads
 hide-get-premium
-minimized-playback
-minimized-playback-music
+remove-background-playback-restrictions
 music-video-ads
 navigation-buttons
 old-video-quality-menu
@@ -66,7 +65,7 @@ wide-searchbar
 # ReVancedMusic included patches
 hide-music-video-ads
 hide-category-bar
-minimized-playback
+remove-background-playback-restrictions
 gmscore-support
 bypass-certificate-checks
 enable-exclusive-audio-playback
@@ -97,7 +96,7 @@ unlock-downloads
 # ReTwitter excluded patches
 hide-view-count
 # ReInstagram included patches
-hide-timeline-ads
+hide-ads
 # ReInstagram excluded patches
 # ReTikTok included patches
 feed-filter
@@ -122,3 +121,6 @@ unlock-premium-reddit-icons
 disable-screenshot-popup
 sanitize-sharing-links
 # ReReddit excluded patches
+# ReBandcamp included patches
+remove-play-limits
+# ReBandcamp excluded patches

@@ -34,12 +34,10 @@ jobs:
 
     - name: 'Compile APK with patches'
       env:
-        CN: '${{ secrets.KEYSTORE_CN }}'
-        PASSWORD: '${{ secrets.KEYSTORE_PASSWORD }}'
         GHTOKEN: '${{ secrets.ACTIONS_DEPLOY_ACCESS_TOKEN }}'
       run: |
         chmod +x main.sh
-        ./main.sh "$CN" "$PASSWORD" "$GHTOKEN"
+        ./main.sh "$GHTOKEN"
         echo "date_now=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
 
     - name: 'Upload to GitHub Releases'

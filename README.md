@@ -1,7 +1,7 @@
 ```
 ╦═╗╔═╗╦  ╦╔═╗╔╗╔╔═╗╔═╗╔╦╗ REVANCED ACTIONS BUILDER
 ╠╦╝║╣ ╚╗╔╝╠═╣║║║║  ║╣  ║║ BUILD REVANCED YOURSELF!
-╩╚═╚═╝ ╚╝ ╩ ╩╝╚╝╚═╝╚═╝═╩╝ @elliottophellia #VSPO
+╩╚═╚═╝ ╚╝ ╩ ╩╝╚╝╚═╝╚═╝═╩╝ @elliottophellia   #VSPO
 
 - ko-fi.com/elliottophellia
 - saweria.co/elliottophellia
@@ -15,40 +15,17 @@ Build ReVanced using GitHub Actions.<br/>
 ## Usage
 
 1. Fork this repository
-2. Create your own a certificate and save it to `KEYSTORE`
-4. Create `KEYSTORE_CN` and `KEYSTORE_PASSWORD` secret with your certificate details
-5. Create `ACTIONS_DEPLOY_ACCESS_TOKEN` secret with your GitHub Personal Access Token
-6. Go to Actions
-7. Run `Build APK with Rei Patches` workflow
-
-or
-
-1. Fork this repository
-2. Contact me on telegram [@elliottophellia](https://t.me/elliottophellia)
-3. Kindly ask for `KEYSTORE_CN` and `KEYSTORE_PASSWORD`
-4. Put `KEYSTORE_CN` and `KEYSTORE_PASSWORD` in your secrets
-5. Create `ACTIONS_DEPLOY_ACCESS_TOKEN` secret with your GitHub Personal Access Token
-6. Go to Actions
-7. Run `Build APK with Rei Patches` workflow
+2. Create `ACTIONS_DEPLOY_ACCESS_TOKEN` secret with your GitHub Personal Access Token
+3. Go to Actions
+4. Run `Build APK with Rei Patches` workflow
 
 ## Configurations
 
 ```config
 #
-# REVANCED BUILD APK CONFIG
-#
-# READ THIS FIRST | READ THIS FIRST | READ THIS FIRST | READ THIS FIRST
-#
-# Latest version of GMSCore/MicroG is alredy included so you don't really have to build it again
-# Youtube Music, Twitch, TikTok, and VSCO is not supported by APKPure
-# Twitter (X) is not supported by UpToDown
-# Mix is used to fix those two issues
-# PKGNAME and VERSION variables are might be different for each Mirror
+# REVANCED BUILD APK CONFIGS
 #
 
-APP_MIRROR="mix"
-
-BUILD_REMICROG="false"
 BUILD_REVANCED="true"
 BUILD_REVANCED_MUSIC="true"
 BUILD_RETWITCH="true"
@@ -59,8 +36,8 @@ BUILD_RETIKTOK="true"
 BUILD_REPIXIV="true"
 BUILD_REVSCO="true"
 BUILD_REREDDIT="true"
+BUILD_REBANDCAMP="true"
 
-APPNAME_REMICROG="microg-for-ogyt"
 APPNAME_REVANCED="youtube"
 APPNAME_REVANCED_MUSIC="youtube-music"
 APPNAME_RETWITCH="twitch"
@@ -70,9 +47,9 @@ APPNAME_REINSTAGRAM="instagram"
 APPNAME_RETIKTOK="tiktok"
 APPNAME_REPIXIV="pixiv"
 APPNAME_REVSCO="vsco-cam"
-APPNAME_REREDDIT="reddit-official-app"
+APPNAME_REREDDIT="reddit-official-app" 
+APPNAME_REBANDCAMP="bandcamp"
 
-PKGNAME_REMICROG="com.mgoogle.android.gms"
 PKGNAME_REVANCED="com.google.android.youtube"
 PKGNAME_REVANCED_MUSIC="com.google.android.apps.youtube.music"
 PKGNAME_RETWITCH="tv.twitch.android.app"
@@ -83,27 +60,39 @@ PKGNAME_RETIKTOK="com.ss.android.ugc.trill"
 PKGNAME_REPIXIV="jp.pxv.android"
 PKGNAME_REVSCO="com.vsco.cam"
 PKGNAME_REREDDIT="com.reddit.frontpage"
+PKGNAME_REBANDCAMP="com.bandcamp.android"
 
-VERSION_REMICROG="0.3.1.4.240913"
-VERSION_REVANCED="19.11.43"
-VERSION_REVANCED_MUSIC="6.45.54"
+VERSION_REVANCED="19.16.39"
+VERSION_REVANCED_MUSIC="7.03.52"
 VERSION_RETWITCH="16.9.1"
 VERSION_RELIGHTROOM="9.2.0"
 VERSION_RETWITTER="10.35.0-release.0"
-VERSION_REINSTAGRAM="326.0.0.42.90"
+VERSION_REINSTAGRAM="344.1.0.42.92"
 VERSION_RETIKTOK="32.5.3"
 VERSION_REPIXIV="6.104.1"
 VERSION_REVSCO="345"
-VERSION_REREDDIT="2024.15.0"
+VERSION_REREDDIT="2024.17.0"
+VERSION_REBANDCAMP="3.1.2"
 ```
 
 ## License
 
 ```
-Revanced-Actions-Builder  Copyright (C)  2024 Reidho Satria
-This program comes with ABSOLUTELY NO WARRANTY.
-This is free software, and you are welcome to redistribute it
-under certain conditions; read LICENSE for details.
+Revanced-Actions-Builder
+Copyright (C) 2024  Reidho Satria
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ```
 
 ## Credits

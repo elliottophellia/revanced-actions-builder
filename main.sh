@@ -13,6 +13,7 @@ declare -a retiktok_patches
 declare -a repixiv_patches
 declare -a revsco_patches
 declare -a rereddit_patches
+declare -a rebandcamp_patches
 
 populate_revanced-patches() {
     while read -r revanced__patches; do
@@ -74,6 +75,12 @@ populate_rereddit-patches() {
     done <<<"$2"
 }
 
+populate_rebandcamp-patches() {
+    while read -r rebandcamp__patches; do
+        rebandcamp_patches+=("$1 $rebandcamp__patches")
+    done <<<"$2"
+}
+
 revanced_included_start="$(grep -n -m1 'ReVanced included patches' "$PATCHES" | cut -d':' -f1)"
 revanced_excluded_start="$(grep -n -m1 'ReVanced excluded patches' "$PATCHES" | cut -d':' -f1)"
 revanced_music_included_start="$(grep -n -m1 'ReVancedMusic included patches' "$PATCHES" | cut -d':' -f1)"
@@ -94,6 +101,8 @@ revsco_included_start="$(grep -n -m1 'ReVSCO included patches' "$PATCHES" | cut 
 revsco_excluded_start="$(grep -n -m1 'ReVSCO excluded patches' "$PATCHES" | cut -d':' -f1)"
 rereddit_included_start="$(grep -n -m1 'ReReddit included patches' "$PATCHES" | cut -d':' -f1)"
 rereddit_excluded_start="$(grep -n -m1 'ReReddit excluded patches' "$PATCHES" | cut -d':' -f1)"
+rebandcamp_included_start="$(grep -n -m1 'ReBandcamp included patches' "$PATCHES" | cut -d':' -f1)"
+rebandcamp_excluded_start="$(grep -n -m1 'ReBandcamp excluded patches' "$PATCHES" | cut -d':' -f1)"
 
 revanced_included_patches="$(tail -n +$revanced_included_start $PATCHES | head -n "$((revanced_excluded_start - revanced_included_start))" | grep '^[^#[:blank:]]')"
 revanced_excluded_patches="$(tail -n +$revanced_excluded_start $PATCHES | grep '^[^#[:blank:]]')"
@@ -115,6 +124,8 @@ revsco_included_patches="$(tail -n +$revsco_included_start $PATCHES | head -n "$
 revsco_excluded_patches="$(tail -n +$revsco_excluded_start $PATCHES | grep '^[^#[:blank:]]')"
 rereddit_included_patches="$(tail -n +$rereddit_included_start $PATCHES | head -n "$((rereddit_excluded_start - rereddit_included_start))" | grep '^[^#[:blank:]]')"
 rereddit_excluded_patches="$(tail -n +$rereddit_excluded_start $PATCHES | grep '^[^#[:blank:]]')"
+rebandcamp_included_patches="$(tail -n +$rebandcamp_included_start $PATCHES | head -n "$((rebandcamp_excluded_start - rebandcamp_included_start))" | grep '^[^#[:blank:]]')"
+rebandcamp_excluded_patches="$(tail -n +$rebandcamp_excluded_start $PATCHES | grep '^[^#[:blank:]]')"
 
 [[ ! -z "$revanced_included_patches" ]] && populate_revanced-patches "-i" "$revanced_included_patches"
 [[ ! -z "$revanced_excluded_patches" ]] && populate_revanced-patches "-e" "$revanced_excluded_patches"
@@ -136,22 +147,13 @@ rereddit_excluded_patches="$(tail -n +$rereddit_excluded_start $PATCHES | grep '
 [[ ! -z "$revsco_excluded_patches" ]] && populate_revsco-patches "-e" "$revsco_excluded_patches"
 [[ ! -z "$rereddit_included_patches" ]] && populate_rereddit-patches "-i" "$rereddit_included_patches"
 [[ ! -z "$rereddit_excluded_patches" ]] && populate_rereddit-patches "-e" "$rereddit_excluded_patches"
-
-function build_remicrog() {
-    echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [START] $(echo $APPNAME_REMICROG | tr [':lower:]' [':upper:'])"
-    if [ -f "downloads/$PKGNAME_REMICROG.apk" ]; then
-        mv downloads/$PKGNAME_REMICROG.apk ./output/rei_$(echo $APPNAME_REMICROG | tr [':upper:]' [':lower:'])_$VERSION_REMICROG.apk 
-
-        echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [GOOD] Successfully rebuild $(echo $APPNAME_REMICROG | tr [':upper:]' [':lower:'])"
-    else
-        echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [BAD] Cannot find $(echo $APPNAME_REMICROG | tr [':upper:]' [':lower:']) base package"
-    fi
-}
+[[ ! -z "$rebandcamp_included_patches" ]] && populate_rebandcamp-patches "-i" "$rebandcamp_included_patches"
+[[ ! -z "$rebandcamp_excluded_patches" ]] && populate_rebandcamp-patches "-e" "$rebandcamp_excluded_patches"
 
 function build_revanced() {
     echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [START] $(echo $APPNAME_REVANCED | tr [':lower:]' [':upper:'])"
     if [ -f "downloads/$PKGNAME_REVANCED.apk" ]; then
-        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=$CN --keystore-password=$PASSWORD --keystore-entry-password=$PASSWORD \
+        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=elliottophellia --keystore-password=elliottophellia --keystore-entry-password=elliottophellia \
             ${revanced_patches[@]} \
             downloads/$PKGNAME_REVANCED.apk -o "output/rei_$(echo $APPNAME_REVANCED | tr [':upper:]' [':lower:'])_v$VERSION_REVANCED.apk" > /dev/null 2>&1
 
@@ -164,7 +166,7 @@ function build_revanced() {
 function build_revanced_music() {
     echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [START] $(echo $APPNAME_REVANCED_MUSIC | tr [':lower:]' [':upper:'])"
     if [ -f "downloads/$PKGNAME_REVANCED_MUSIC.apk" ]; then
-        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=$CN --keystore-password=$PASSWORD --keystore-entry-password=$PASSWORD \
+        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=elliottophellia --keystore-password=elliottophellia --keystore-entry-password=elliottophellia \
             ${revanced_music_patches[@]} \
             downloads/$PKGNAME_REVANCED_MUSIC.apk -o "output/rei_$(echo $APPNAME_REVANCED_MUSIC | tr [':upper:]' [':lower:'])_v$VERSION_REVANCED_MUSIC.apk" > /dev/null 2>&1
 
@@ -177,7 +179,7 @@ function build_revanced_music() {
 function build_retwitch() {
     echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [START] $(echo $APPNAME_RETWITCH | tr [':lower:]' [':upper:'])"
     if [ -f "downloads/$PKGNAME_RETWITCH.apk" ]; then
-        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=$CN --keystore-password=$PASSWORD --keystore-entry-password=$PASSWORD \
+        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=elliottophellia --keystore-password=elliottophellia --keystore-entry-password=elliottophellia \
             ${retwitch_patches[@]} \
             downloads/$PKGNAME_RETWITCH.apk -o "output/rei_$(echo $APPNAME_RETWITCH | tr [':upper:]' [':lower:'])_v$VERSION_RETWITCH.apk" > /dev/null 2>&1
 
@@ -190,7 +192,7 @@ function build_retwitch() {
 function build_relightroom() {
     echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [START] $(echo $APPNAME_RELIGHTROOM | tr [':lower:]' [':upper:'])"
     if [ -f "downloads/$PKGNAME_RELIGHTROOM.apk" ]; then
-        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=$CN --keystore-password=$PASSWORD --keystore-entry-password=$PASSWORD \
+        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=elliottophellia --keystore-password=elliottophellia --keystore-entry-password=elliottophellia \
             ${relightroom_patches[@]} \
             downloads/$PKGNAME_RELIGHTROOM.apk -o "output/rei_$(echo $APPNAME_RELIGHTROOM | tr [':upper:]' [':lower:'])_v$VERSION_RELIGHTROOM.apk" > /dev/null 2>&1
 
@@ -203,7 +205,7 @@ function build_relightroom() {
 function build_retwitter() {
     echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [START] $(echo $APPNAME_RETWITTER | tr [':lower:]' [':upper:'])"
     if [ -f "downloads/$PKGNAME_RETWITTER.apk" ]; then
-        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=$CN --keystore-password=$PASSWORD --keystore-entry-password=$PASSWORD \
+        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=elliottophellia --keystore-password=elliottophellia --keystore-entry-password=elliottophellia \
             ${retwitter_patches[@]} \
             downloads/$PKGNAME_RETWITTER.apk -o "output/rei_$(echo $APPNAME_RETWITTER | tr [':upper:]' [':lower:'])_v$VERSION_RETWITTER.apk" > /dev/null 2>&1
 
@@ -216,7 +218,7 @@ function build_retwitter() {
 function build_reinstagram() {
     echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [START] $(echo $APPNAME_REINSTAGRAM | tr [':lower:]' [':upper:'])"
     if [ -f "downloads/$PKGNAME_REINSTAGRAM.apk" ]; then
-        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=$CN --keystore-password=$PASSWORD --keystore-entry-password=$PASSWORD \
+        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=elliottophellia --keystore-password=elliottophellia --keystore-entry-password=elliottophellia \
             ${reinstagram_patches[@]} \
             downloads/$PKGNAME_REINSTAGRAM.apk -o "output/rei_$(echo $APPNAME_REINSTAGRAM | tr [':upper:]' [':lower:'])_v$VERSION_REINSTAGRAM.apk" > /dev/null 2>&1
 
@@ -229,7 +231,7 @@ function build_reinstagram() {
 function build_retiktok() {
     echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [START] $(echo $APPNAME_RETIKTOK | tr [':lower:]' [':upper:'])"
     if [ -f "downloads/$PKGNAME_RETIKTOK.apk" ]; then
-        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=$CN --keystore-password=$PASSWORD --keystore-entry-password=$PASSWORD \
+        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=elliottophellia --keystore-password=elliottophellia --keystore-entry-password=elliottophellia \
             ${retiktok_patches[@]} \
             downloads/$PKGNAME_RETIKTOK.apk -o "output/rei_$(echo $APPNAME_RETIKTOK | tr [':upper:]' [':lower:'])_v$VERSION_RETIKTOK.apk" > /dev/null 2>&1
 
@@ -242,7 +244,7 @@ function build_retiktok() {
 function build_repixiv() {
     echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [START] $(echo $APPNAME_REPIXIV | tr [':lower:]' [':upper:'])"
     if [ -f "downloads/$PKGNAME_REPIXIV.apk" ]; then
-        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=$CN --keystore-password=$PASSWORD --keystore-entry-password=$PASSWORD \
+        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=elliottophellia --keystore-password=elliottophellia --keystore-entry-password=elliottophellia \
             ${repixiv_patches[@]} \
             downloads/$PKGNAME_REPIXIV.apk -o "output/rei_$(echo $APPNAME_REPIXIV | tr [':upper:]' [':lower:'])_v$VERSION_REPIXIV.apk" > /dev/null 2>&1
 
@@ -255,7 +257,7 @@ function build_repixiv() {
 function build_revsco() {
     echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [START] $(echo $APPNAME_REVSCO | tr [':lower:]' [':upper:'])"
     if [ -f "downloads/$PKGNAME_REVSCO.apk" ]; then
-        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=$CN --keystore-password=$PASSWORD --keystore-entry-password=$PASSWORD \
+        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=elliottophellia --keystore-password=elliottophellia --keystore-entry-password=elliottophellia \
             ${revsco_patches[@]} \
             downloads/$PKGNAME_REVSCO.apk -o "output/rei_$(echo $APPNAME_REVSCO | tr [':upper:]' [':lower:'])_v$VERSION_REVSCO.apk" > /dev/null 2>&1
 
@@ -268,7 +270,7 @@ function build_revsco() {
 function build_rereddit() {
     echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [START] $(echo $APPNAME_REREDDIT | tr [':lower:]' [':upper:'])"
     if [ -f "downloads/$PKGNAME_REREDDIT.apk" ]; then
-        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=$CN --keystore-password=$PASSWORD --keystore-entry-password=$PASSWORD \
+        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=elliottophellia --keystore-password=elliottophellia --keystore-entry-password=elliottophellia \
             ${rereddit_patches[@]} \
             downloads/$PKGNAME_REREDDIT.apk -o "output/rei_$(echo $APPNAME_REREDDIT | tr [':upper:]' [':lower:'])_v$VERSION_REREDDIT.apk" > /dev/null 2>&1
 
@@ -278,16 +280,29 @@ function build_rereddit() {
     fi
 }
 
+function build_rebandcamp() {
+    echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [START] $(echo $APPNAME_REBANDCAMP | tr [':lower:]' [':upper:'])"
+    if [ -f "downloads/$PKGNAME_REBANDCAMP.apk" ]; then
+        java -jar revanced-cli.jar patch -m revanced-integrations.apk -b revanced-patches.jar --keystore=keystore.keystore --keystore-entry-alias=elliottophellia --keystore-password=elliottophellia --keystore-entry-password=elliottophellia \
+            ${rebandcamp_patches[@]} \
+            downloads/$PKGNAME_REBANDCAMP.apk -o "output/rei_$(echo $APPNAME_REBANDCAMP | tr [':upper:]' [':lower:'])_v$VERSION_REBANDCAMP.apk" > /dev/null 2>&1
+
+        echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [GOOD] Successfully rebuild $(echo $APPNAME_REBANDCAMP | tr [':upper:]' [':lower:'])"
+    else
+        echo "$(date -u '+%Y-%m-%d %H:%M:%S') BUILD: [BAD] Cannot find $(echo $APPNAME_REBANDCAMP | tr [':upper:]' [':lower:']) base package"
+    fi
+}
+
 echo "
 
 ╦═╗╔═╗╦  ╦╔═╗╔╗╔╔═╗╔═╗╔╦╗ REVANCED ACTIONS BUILDER
 ╠╦╝║╣ ╚╗╔╝╠═╣║║║║  ║╣  ║║ BUILD REVANCED YOURSELF!
-╩╚═╚═╝ ╚╝ ╩ ╩╝╚╝╚═╝╚═╝═╩╝ @𝐞𝐥𝐥𝐢𝐨𝐭𝐭𝐨𝐩𝐡𝐞𝐥𝐥𝐢𝐚 #VSPO
+╩╚═╚═╝ ╚╝ ╩ ╩╝╚╝╚═╝╚═╝═╩╝ @elliottophellia   #VSPO
  
-- ko-fi.com/𝐞𝐥𝐥𝐢𝐨𝐭𝐭𝐨𝐩𝐡𝐞𝐥𝐥𝐢𝐚
-- saweria.co/𝐞𝐥𝐥𝐢𝐨𝐭𝐭𝐨𝐩𝐡𝐞𝐥𝐥𝐢𝐚
-- trakteer.id/𝐞𝐥𝐥𝐢𝐨𝐭𝐭𝐨𝐩𝐡𝐞𝐥𝐥𝐢𝐚
-- liberapay.com/𝐞𝐥𝐥𝐢𝐨𝐭𝐭𝐨𝐩𝐡𝐞𝐥𝐥𝐢𝐚
+- ko-fi.com/elliottophellia
+- saweria.co/elliottophellia
+- trakteer.id/elliottophellia
+- liberapay.com/elliottophellia
 
 "
 
@@ -312,44 +327,25 @@ DL_REVANCEDGMSCORE=$(curl -s -H "authorization: Bearer $GHTOKEN" $REVANCEDGMSCOR
 DL_REVANCEDPATCHES=$(curl -s -H "authorization: Bearer $GHTOKEN" $REVANCEDPATCHES | jq -r '.assets[] | select(.name | test("revanced-patches-\\d+(\\.\\d+)*\\.jar$")) | .browser_download_url')
 DL_REVANCEDINTEGRATIONS=$(curl -s -H "authorization: Bearer $GHTOKEN" $REVANCEDINTEGRATIONS | jq -r '.assets[] | select(.name | test("revanced-integrations-\\d+(\\.\\d+)*\\.apk$")) | .browser_download_url')
 
-echo -e "\n$(date -u '+%Y-%m-%d %H:%M:%S') DOWNLOAD: $(basename $DL_REVANCEDCLI | tr '[:lower:]' '[:upper:]')\n" && curl -s -L "$DL_REVANCEDCLI" -o revanced-cli.jar
+echo -e "\n$(date -u '+%Y-%m-%d %H:%M:%S') DOWNLOAD: $(basename $DL_REVANCEDCLI | tr '[:lower:]' '[:upper:]')\n" && curl -s -L -H "authorization: Bearer $GHTOKEN" "$DL_REVANCEDCLI" -o revanced-cli.jar &
 wait
-if [ "$BUILD_REMICROG" = "false" ]; then
-    echo -e "\n$(date -u '+%Y-%m-%d %H:%M:%S') DOWNLOAD: $(basename $DL_REVANCEDGMSCORE | tr '[:lower:]' '[:upper:]')\n" && curl -s -L "$DL_REVANCEDGMSCORE" -o output/rei_microg_latest.apk
-    wait
-fi
-echo -e "\n$(date -u '+%Y-%m-%d %H:%M:%S') DOWNLOAD: $(basename $DL_REVANCEDPATCHES | tr '[:lower:]' '[:upper:]')\n" && curl -s -L "$DL_REVANCEDPATCHES" -o revanced-patches.jar
+echo -e "\n$(date -u '+%Y-%m-%d %H:%M:%S') DOWNLOAD: $(basename $DL_REVANCEDGMSCORE | tr '[:lower:]' '[:upper:]')\n" && curl -s -L -H "authorization: Bearer $GHTOKEN" "$DL_REVANCEDGMSCORE" -o output/rei_microg_latest.apk &
 wait
-echo -e "\n$(date -u '+%Y-%m-%d %H:%M:%S') DOWNLOAD: $(basename $DL_REVANCEDINTEGRATIONS | tr '[:lower:]' '[:upper:]')\n" && curl -s -L "$DL_REVANCEDINTEGRATIONS" -o revanced-integrations.apk
+echo -e "\n$(date -u '+%Y-%m-%d %H:%M:%S') DOWNLOAD: $(basename $DL_REVANCEDPATCHES | tr '[:lower:]' '[:upper:]')\n" && curl -s -L -H "authorization: Bearer $GHTOKEN" "$DL_REVANCEDPATCHES" -o revanced-patches.jar &
+wait
+echo -e "\n$(date -u '+%Y-%m-%d %H:%M:%S') DOWNLOAD: $(basename $DL_REVANCEDINTEGRATIONS | tr '[:lower:]' '[:upper:]')\n" && curl -s -L -H "authorization: Bearer $GHTOKEN" "$DL_REVANCEDINTEGRATIONS" -o revanced-integrations.apk &
 wait
 
 echo "
 
 ╔═╗╔═╗╦╔═╔═╗ Downloading APKs
-╠═╣╠═╝╠╩╗╚═╗ from $(echo $APP_MIRROR | tr '[:lower:]' '[:upper:]')
+╠═╣╠═╝╠╩╗╚═╗ from Internet
 ╩ ╩╩  ╩ ╩╚═╝ ------------------->_
 
 "
 
-chmod +x ./apkpure.sh
-chmod +x ./uptodown.sh
-
-if [ "$APP_MIRROR" = "apkpure" ]; then
-    ./apkpure.sh
-elif [ "$APP_MIRROR" = "uptodown" ]; then
-    ./uptodown.sh
-elif [ "$APP_MIRROR" = "mix" ]; then
-    ./apkpure.sh
-    wait
-    ./uptodown.sh
-else
-    echo "Invalid download platform"
-    exit 1
-fi
-wait
-
-chmod +x ./verification.sh
-./verification.sh
+chmod +x ./download.sh
+./download.sh
 
 echo "
 
@@ -360,7 +356,6 @@ echo "
 "
 
 declare -A build_apps=(
-    [REMICROG]="$BUILD_REMICROG"
     [REVANCED]="$BUILD_REVANCED"
     [REVANCED_MUSIC]="$BUILD_REVANCED_MUSIC"
     [RETWITCH]="$BUILD_RETWITCH"
@@ -371,6 +366,7 @@ declare -A build_apps=(
     [REPIXIV]="$BUILD_REPIXIV"
     [REVSCO]="$BUILD_REVSCO"
     [REREDDIT]="$BUILD_REREDDIT"
+    [REBANDCAMP]="$BUILD_REBANDCAMP"
 )
 
 for app in "${!build_apps[@]}"; do
