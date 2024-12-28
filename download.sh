@@ -1,33 +1,28 @@
 #!/usr/bin/env bash
 
-# Configs
+# Load configurations
 source configs.txt
 
-# Download Folder
-appFolder="downloads"
+# Constants
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly APP_FOLDER="${SCRIPT_DIR}/downloads"
+readonly TEMP_DIR="${SCRIPT_DIR}/temp_downloads"
+readonly REVANCED_API="https://api.revanced.app/v2/patches/latest"
+readonly USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) FlashBrowser/1.0.0 Chrome/83.0.4103.122 Electron/9.4.4 Safari/537.36"
 
-# Revanced API
-revancedApi="https://api.revanced.app/v2/patches/latest"
-
-getRequestUpToDown() {
-    curl -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" \
-         -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8" \
-         -H "Sec-Fetch-Dest: document" \
-         -H "Sec-Fetch-Mode: navigate" \
-         -H "Sec-Fetch-Site: none" \
-         -H "Sec-Fetch-User: ?1" \
-         -H "Sec-GPC: 1" \
-         -H "Upgrade-Insecure-Requests: 1" \
-         -H 'sec-ch-ua: "Brave";v="123", "Not:A-Brand";v="8", "Chromium";v="123"' \
-         -H "sec-ch-ua-mobile: ?0" \
-         -H 'sec-ch-ua-platform: "Windows"' \
-         -s \
-         -L \
-         -o "$1" "$2"
+# Logger function
+log() {
+    local level=$1
+    local message=$2
+    echo "$(date -u '+%Y-%m-%d %H:%M:%S') ${level}: ${message}"
 }
 
-getRequestAPKPure() {
-    curl -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) FlashBrowser/1.0.0 Chrome/83.0.4103.122 Electron/9.4.4 Safari/537.36" \
+# Make HTTP requests with consistent headers
+make_request() {
+    local output_file=$1
+    local url=$2
+    
+    curl -H "User-Agent: ${USER_AGENT}" \
          -H "Accept: */*" \
          -H "Accept-Encoding: gzip, deflate" \
          -H "Accept-Language: en-US;q=0.5" \
@@ -35,153 +30,168 @@ getRequestAPKPure() {
          --compressed \
          -s \
          -L \
-         -o "$1" "$2"
+         -o "$output_file" "$url"
 }
 
-getSupportedVersion() {
-    jq -r --arg pkg_name "$1" '.. | objects | select(.name == "\($pkg_name)" and .versions != null) | .versions[-1]' | uniq
+# Get supported version from ReVanced API
+get_supported_version() {
+    local pkg_name=$1
+    jq -r --arg pkg_name "$pkg_name" '.. | objects | select(.name == "\($pkg_name)" and .versions != null) | .versions[-1]' | uniq
 }
 
-getDownloadURLUpToDown() {
-    local name="$1" 
-    local package="$2"
-    local version="$3"
-    local url="https://$name.en.uptodown.com/android"
-    local id="$(getRequestUpToDown - "$url" | pup 'h1[id=detail-app-name] attr{code}')"
+# Download APK from APKPure
+download_from_apkpure() {
+    local package=$1
+    local version=$2
+    local log_file="/tmp/download_log.txt"
 
+    # Get version if not provided
     if [ -z "$version" ]; then
-        version=$(getRequestUpToDown - "$revancedApi" | getSupportedVersion "$package")
-    fi
-
-    if [ -z "$version" ]; then
-        echo "Error: Unable to determine version for $package" >&2
-        return 1
-    fi
-
-    local page=1
-    local max_pages=10
-    local version_url=""
-
-    while [ -z "$version_url" ] && [ $page -le $max_pages ]; do
-        url="https://$name.en.uptodown.com/android/apps/$id/versions/$page"
-        version_url=$(getRequestUpToDown - "$url" | jq -r --arg version "$version" '.data[] | select(.version == $version) | .versionURL')
-
-        if [ -z "$version_url" ]; then
-            ((page++))
-            sleep 5
+        version=$(make_request - "$REVANCED_API" | get_supported_version "$package")
+        
+        if [ -z "$version" ]; then
+            version=$(make_request - "https://apkpure.com/search?q=$package" | 
+                     pup 'div[data-dt-app='"$package"'] attr{data-dt-version}')
         fi
-    done
-
-    if [ -z "$version_url" ]; then
-        echo "Error: Version $version not found for $name" >&2
-        return 1
     fi
 
-    url="https://dw.uptodown.com/dwn/$(getRequestUpToDown - "$version_url" | pup 'button#detail-download-button attr{data-url}')"
-    getRequestUpToDown "$package.apk" "$url"
+    # Get version code
+    local search_url="https://apkpure.com/search?q=$package"
+    local code_path=$(make_request - "$search_url" | 
+                     pup 'div[data-dt-app='"$package"']' | 
+                     pup 'a.first-info attr{href}')"/versions"
     
-    if [ $? -ne 0 ] || [ ! -s "$package.apk" ]; then
-        echo "Error: Failed to download $package.apk" >&2
+    local version_code=$(make_request - "$code_path" | 
+                        pup 'a[data-dt-version='"$version"'] attr{data-dt-versioncode}')
+    
+    # Download APK
+    local download_url="https://d.apkpure.com/b/APK/$package?versionCode=$version_code"
+    make_request "${package}.apk" "$download_url" 2>&1 | tee "$log_file"
+
+    # Verify download
+    if [ ! -s "${package}.apk" ]; then
+        log "ERROR" "Failed to download ${package}.apk"
         return 1
     fi
 }
 
-getDownloadURLAPKPure() {
-    local package="$1"
-    local version="$2"
+# Process download and move APK
+process_download() {
+    local source=$1
+    local app_name=$2
+    local pkg_name=$3
+    local version=$4
 
-    if [ -z "$version" ]; then
-        version=$(getRequestAPKPure - "$revancedApi" | getSupportedVersion "$package")
-    fi
+    log "INFO" "Starting download for $pkg_name version $version from $source"
 
-    if [ -z "$version" ]; then
-        version=$(getRequestAPKPure - "https://apkpure.com/search?q=$package" | pup 'div[data-dt-app='"$package"'] attr{data-dt-version}')
-    fi
+    # Create a temporary directory for downloads
+    mkdir -p "$TEMP_DIR"
+    cd "$TEMP_DIR" || exit 1
 
-    local code=$(getRequestAPKPure - "https://apkpure.com/search?q=$package" | pup 'div[data-dt-app='"$package"']' | pup 'a.first-info attr{href}')"/versions"
-    code=$(getRequestAPKPure - "$code" | pup 'a[data-dt-version='"$version"'] attr{data-dt-versioncode}')
-    local url="https://d.apkpure.com/b/APK/$package?versionCode=$code"
+    case "$source" in
+        "apkpure")
+            if ! download_from_apkpure "$pkg_name" "$version"; then
+                log "ERROR" "Failed to download $pkg_name"
+                cd "$SCRIPT_DIR" || exit 1
+                return 1
+            fi
+            ;;
+        *)
+            log "ERROR" "Unknown source $source"
+            cd "$SCRIPT_DIR" || exit 1
+            return 1
+            ;;
+    esac
 
-    getRequestAPKPure "${package}.apk" "$url"
+    # Ensure download directory exists
+    mkdir -p "${APP_FOLDER}"
 
-    if [ $? -ne 0 ] || [ ! -s "${package}.apk" ]; then
-        echo "Error: Failed to download ${package}.apk" >&2
-        return 1
-    fi
-}
-
-downloadAndMoveApk() {
-    local source="$1"
-    local appName="$2"
-    local pkgName="$3"
-    local version="${4:-}"
-
-    echo "$(date -u '+%Y-%m-%d %H:%M:%S') DOWNLOAD: $pkgName $version from $source"
-
-    if [ "$source" = "uptodown" ]; then
-        getDownloadURLUpToDown "$appName" "$pkgName" "$version" 2>&1 | tee /tmp/download_log.txt
-    elif [ "$source" = "apkpure" ]; then
-        getDownloadURLAPKPure "$pkgName" "$version" 2>&1 | tee /tmp/download_log.txt
-    else
-        echo "Error: Unknown source $source" >&2
-        return 1
-    fi
-
-    if [ -s "${pkgName}.apk" ]; then
-        mv "${pkgName}.apk" "downloads/${pkgName}.apk"
-        echo "$(date -u '+%Y-%m-%d %H:%M:%S') SUCCESS: Downloaded $pkgName $version from $source"
+    if [ -s "${pkg_name}.apk" ]; then
+        mv "${pkg_name}.apk" "${APP_FOLDER}/${pkg_name}.apk"
+        log "SUCCESS" "Downloaded $pkg_name $version from $source"
+        cd "$SCRIPT_DIR" || exit 1
         return 0
     else
-        echo "$(date -u '+%Y-%m-%d %H:%M:%S') ERROR: APK file is empty or download failed for $pkgName $version from $source"
-        cat /tmp/download_log.txt >&2
+        log "ERROR" "APK file is empty or download failed for $pkg_name $version from $source"
+        [ -f /tmp/download_log.txt ] && cat /tmp/download_log.txt >&2
+        cd "$SCRIPT_DIR" || exit 1
         return 1
     fi
 }
 
-if [ ! -d "$appFolder" ]; then
-    mkdir -p "$appFolder"
-fi
-
-declare -A apps=(
-    [REVANCED]="uptodown $BUILD_REVANCED $APPNAME_REVANCED $PKGNAME_REVANCED $VERSION_REVANCED"
-    [REVANCED_MUSIC]="apkpure $BUILD_REVANCED_MUSIC $APPNAME_REVANCED_MUSIC $PKGNAME_REVANCED_MUSIC $VERSION_REVANCED_MUSIC"
-    [RETWITCH]="uptodown $BUILD_RETWITCH $APPNAME_RETWITCH $PKGNAME_RETWITCH $VERSION_RETWITCH"
-    [RELIGHTROOM]="uptodown $BUILD_RELIGHTROOM $APPNAME_RELIGHTROOM $PKGNAME_RELIGHTROOM $VERSION_RELIGHTROOM"
-    [RETWITTER]="apkpure $BUILD_RETWITTER $APPNAME_RETWITTER $PKGNAME_RETWITTER $VERSION_RETWITTER"
-    [REINSTAGRAM]="apkpure $BUILD_REINSTAGRAM $APPNAME_REINSTAGRAM $PKGNAME_REINSTAGRAM $VERSION_REINSTAGRAM"
-    [RETIKTOK]="uptodown $BUILD_RETIKTOK $APPNAME_RETIKTOK $PKGNAME_RETIKTOK $VERSION_RETIKTOK"
-    [REPIXIV]="uptodown $BUILD_REPIXIV $APPNAME_REPIXIV $PKGNAME_REPIXIV $VERSION_REPIXIV"
-    [REVSCO]="uptodown $BUILD_REVSCO $APPNAME_REVSCO $PKGNAME_REVSCO $VERSION_REVSCO"
-    [REREDDIT]="uptodown $BUILD_REREDDIT $APPNAME_REREDDIT $PKGNAME_REREDDIT $VERSION_REREDDIT"
-    [REBANDCAMP]="uptodown $BUILD_REBANDCAMP $APPNAME_REBANDCAMP $PKGNAME_REBANDCAMP $VERSION_REBANDCAMP"
-)
-
-for app in "${!apps[@]}"; do
-    IFS=' ' read -r source buildFlag appName pkgName version <<< "${apps[$app]}"
-    if [ "$buildFlag" = "true" ]; then
-        downloadAndMoveApk "$source" "$appName" "$pkgName" "$version"
-    else
-        echo "$(date -u '+%Y-%m-%d %H:%M:%S') SKIP: $pkgName $version"
+# Verify APK signature
+verify_apk() {
+    local apk_file=$1
+    
+    if [ ! -f "$apk_file" ]; then
+        log "ERROR" "APK file not found: $apk_file"
+        return 1
     fi
-    sleep 20s
-done
 
-# Check if apksigner is installed and in your PATH
-if ! command -v apksigner &> /dev/null
-then
-    echo "$(date -u '+%Y-%m-%d %H:%M:%S') WARNING: apksigner is not found. Skipping verification."
-else
-    # Iterate through all .apk files in the downloads folder
-    for apk_file in downloads/*.apk; do
-        # Run apksigner verify and capture the output and errors
-        output=$(apksigner verify "$apk_file" 2>&1)
+    if ! command -v apksigner &> /dev/null; then
+        log "WARNING" "apksigner is not found. Skipping verification."
+        return 0
+    fi
 
-        # Check if the word "Malformed" is present in the output
-        if [[ $output == *"Malformed APK"* ]]; then
-            echo "$(date -u '+%Y-%m-%d %H:%M:%S') VERIFICATION: [BAD] $apk_file is not passing the verification!"
-            rm -f "$apk_file"
+    log "INFO" "Verifying APK: $apk_file"
+    local output=$(apksigner verify "$apk_file" 2>&1)
+    
+    if [[ $output == *"Malformed APK"* ]]; then
+        log "VERIFICATION" "[BAD] $apk_file is not passing the verification!"
+        rm -f "$apk_file"
+        return 1
+    else
+        log "VERIFICATION" "[GOOD] $apk_file is passing the verification!"
+        return 0
+    fi
+}
+
+# Main execution
+main() {
+    # Create download directory if it doesn't exist
+    mkdir -p "$APP_FOLDER"
+
+    # Trim any whitespace from config values
+    BUILD_REVANCED=$(echo "$BUILD_REVANCED" | tr -d '[:space:]')
+    BUILD_REVANCED_MUSIC=$(echo "$BUILD_REVANCED_MUSIC" | tr -d '[:space:]')
+
+    # Define apps to process
+    declare -A apps=(
+        [REVANCED]="apkpure $BUILD_REVANCED $APPNAME_REVANCED $PKGNAME_REVANCED $VERSION_REVANCED"
+        [REVANCED_MUSIC]="apkpure $BUILD_REVANCED_MUSIC $APPNAME_REVANCED_MUSIC $PKGNAME_REVANCED_MUSIC $VERSION_REVANCED_MUSIC"
+    )
+
+    local download_success=0
+    local download_failed=0
+
+    # Process each app
+    for app in "${!apps[@]}"; do
+        IFS=' ' read -r source buildFlag appName pkgName version <<< "${apps[$app]}"
+        if [ "$buildFlag" = "true" ]; then
+            log "INFO" "Processing $pkgName version $version"
+            if process_download "$source" "$appName" "$pkgName" "$version"; then
+                ((download_success++))
+            else
+                ((download_failed++))
+                log "ERROR" "Failed to process $pkgName"
+            fi
+            sleep 20s
         else
-            echo "$(date -u '+%Y-%m-%d %H:%M:%S') VERIFICATION: [GOOD] $apk_file is passing the verification!"
+            log "SKIP" "Skipping $pkgName (build flag: $buildFlag)"
         fi
     done
-fi
+
+    # Verify downloaded APKs
+    log "INFO" "Verifying downloaded APKs..."
+    for apk_file in "${APP_FOLDER}"/*.apk; do
+        if [ -f "$apk_file" ]; then
+            verify_apk "$apk_file"
+        fi
+    done
+
+    # Summary
+    log "SUMMARY" "Successfully downloaded: $download_success, Failed: $download_failed"
+}
+
+# Execute main function
+main
